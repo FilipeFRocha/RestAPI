@@ -1,28 +1,22 @@
 # PHP Rest API Usage Guide
+This document provides practical examples of how to use the Rest API project to build and execute SQL queries.
 
-This document provides practical examples of how to use the **QueryBuilder** class to build and execute SQL queries in a clean, object-oriented way.
-
-## Project Structure
-
-| File | Purpose |
-|------|----------|
-| **Database.php** | Contains the database connection credentials and logic to establish a PDO connection. |
-| **QueryBuilder.php** | Defines the `QueryBuilder` class responsible for building and executing SQL queries. |
-| **ApiController.php** | Contains functions where your queries are created using the `QueryBuilder`. |
-| **Router.php** | Handles routing and configuration for your API endpoints. |
-| **RestAPI.php** | Serves as the main entry point for your REST API, where endpoints are registered. |
+## Example Queries
+Below are practical examples of how to create SQL Queries using the QueryBuilder.
+All of these need to be placed inside the `ApiController.php` file.
 
 All queries begin by selecting a table using:
 `$queryBuilder->table('TableName');`
 
-## SELECT
+### SELECT
 ```php
 $results = $queryBuilder
 	->table('Users')
 	->select(['id', 'username', 'email'])
 	->get();
 ```
-### Explanation
+
+#### Explanation
 
 `select()` defines which columns to retrieve.  
 You can pass `['*']` to select all columns.
@@ -32,9 +26,9 @@ You can pass `['*']` to select all columns.
 SELECT id, username, email FROM Users
 ```
   
-## WHERE
+### WHERE
 
-### Example 1 — Simple condition
+#### Example 1 — Simple condition
  ```php
 $results = $queryBuilder
 	->table('Users')
@@ -48,7 +42,7 @@ $results = $queryBuilder
 SELECT id, username FROM Users WHERE status = active
 ```
   
-### Example 2 — Multiple conditions
+#### Example 2 — Multiple conditions
 ```php
 $results = $queryBuilder
 	->table('Products')
@@ -63,7 +57,7 @@ $results = $queryBuilder
 SELECT id, name, price FROM Products WHERE price > 50 AND category = 'Eletronics'
 ```
   
-### Example 3 — IN operator
+#### Example 3 — IN operator
 ```php
 $results = $queryBuilder
 	->table('Orders')
@@ -77,7 +71,7 @@ $results = $queryBuilder
 SELECT order_id, status FROM Orders WHERE status IN ('Pending', 'Shipped', 'Delivered')
 ```
   
-## OR WHERE
+### OR WHERE
 ```php
 $results = $queryBuilder
 	->table('Users')
@@ -92,9 +86,9 @@ $results = $queryBuilder
 SELECT id, username FROM Users WHERE role = 'admin' OR role = 'moderator'
 ```
   
-## JOIN & LEFT JOIN
+### JOIN & LEFT JOIN
 
-### INNER JOIN
+#### INNER JOIN
 ```php
 $results = $queryBuilder
 	->table('Orders')
@@ -108,7 +102,7 @@ $results = $queryBuilder
 SELECT Orders.id, Customers.name AS Customer FROM Orders JOIN Customers ON Orders.customer_id = Customers.id
 ```
 
-### LEFT JOIN
+#### LEFT JOIN
 ```php
 $results = $queryBuilder
 	->table('Customers')
@@ -122,7 +116,7 @@ $results = $queryBuilder
 SELECT Customers.name, Orders.id AS OrderID FROM Customers LEFT JOIN Orders ON Customers.id = Orders.customer_id
 ```
 
-## LIMIT
+### LIMIT
 ```php
 $results = $queryBuilder
 	->table('Orders')
@@ -136,9 +130,9 @@ $results = $queryBuilder
 SELECT order_id, status FROM Orders LIMIT 5
 ```
   
-## ORDER BY
+### ORDER BY
 
-### Example 1 — Single column
+#### Example 1 — Single column
 
 ```php
 $results = $queryBuilder
@@ -153,7 +147,7 @@ $results = $queryBuilder
 SELECT name, price FROM Products ORDER BY price DESC
 ```
 
-### Example 2 — Multiple order columns
+#### Example 2 — Multiple order columns
 ```php
 $results = $queryBuilder
 	->table('Users')
@@ -168,7 +162,7 @@ $results = $queryBuilder
 SELECT id, username FROM Users ORDER BY last_login DESC, username ASC
 ```
   
-## GROUP BY
+### GROUP BY
 ```php
 $results = $queryBuilder
 	->table('Orders')
@@ -182,7 +176,7 @@ $results = $queryBuilder
 SELECT customer_id, COUNT(*) AS total_orders FROM Orders GROUP BY customer_id
 ```
   
-## INSERT
+### INSERT
 ```php
 $success = $queryBuilder
 	->table('Users')
@@ -206,7 +200,7 @@ You can retrieve the last inserted ID with:
 $lastId = $queryBuilder->getLastInsertId();
 ```
   
-## UPDATE
+### UPDATE
 ```php
 $success = $queryBuilder
 	->table('Users')
@@ -220,7 +214,7 @@ $success = $queryBuilder
 UPDATE Users SET status = inactive WHERE id = 3
 ```
   
-## DELETE
+### DELETE
 ```php
 $success = $queryBuilder
 	->table('Users')
@@ -234,16 +228,82 @@ $success = $queryBuilder
 DELETE FROM Users WHERE id = 10
 ```
   
-## Get Server Timestamp
+### Get Server Timestamp
 ```php
 $timestamp = $queryBuilder->getServerTimeStamp();
 
 echo "Current server time: $timestamp";
 ```
   
-## Raw SQL (for advanced use)
+### Raw SQL (for advanced use)
 ```php
 $queryBuilder->raw("UPDATE Users SET status = 'active' WHERE id = 1");
 ```
   
 Use raw() only for specific custom queries when the builder doesn’t support a needed feature.
+
+## Example Endpoint Definitions
+Below are practical examples of how to define API routes using the router.  
+Each route connects an HTTP method and URL path to a controller function.
+
+### GET — Retrieve All Records
+`$router->add('GET', '/users', fn() => $controller->getUsers());`
+
+**Description:**  
+Retrieves all users from the database.
+
+**Example Request:**
+`GET /users`
+
+### GET (with Parameters) — Retrieve Specific Record
+`$router->add('GET', '/userById/$id', fn($id) => $controller->getUserByID($id));`
+
+**Description:**  
+Retrieves a user by their unique ID.
+
+**Example Request:**
+`GET /userById/5`
+
+### POST — Insert New Record
+`$router->add('POST', '/insertUser', fn() => $controller->insertUser());`
+
+**Description:**  
+Creates a new user in the database.
+
+**Example Request:**
+`POST /insertUser`
+
+**Example Body (JSON):**
+```json
+{   
+	"username": "JohnDoe",
+	"email": "john@example.com",
+	"status": "active" 
+}
+```
+### PUT — Update Existing Record
+`$router->add('PUT', '/updateUser', fn() => $controller->updateUser());`
+
+**Description:**  
+Updates user information in the database.
+
+**Example Request:**
+`PUT /updateUser`
+
+**Example Body (JSON):**
+```json
+{   
+	"id": 5,   
+	"email": "JohnDoeUpdate@example.com",   
+	"status": "inactive"
+}
+```
+
+### DELETE — Remove Record
+`$router->add('DELETE', '/deleteUserByID/$id', fn($id) => $controller->deleteUserByID($id));`
+
+**Description:**  
+Deletes a user by their ID.
+
+**Example Request:**
+`DELETE /deleteUserByID/5`
